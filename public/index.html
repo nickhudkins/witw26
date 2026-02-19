@@ -979,6 +979,94 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   margin: 0 4px;
 }
 
+/* ── Preload Progress ───────────────── */
+.preload-status {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8000;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background: rgba(8, 8, 14, 0.88);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 8px 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+
+.preload-label {
+  font: 500 9px var(--font-mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.preload-track {
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.preload-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--accent);
+  transition: width 0.15s;
+}
+
+.preload-text {
+  font: 600 9px var(--font-mono);
+  color: var(--text);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+/* ── Geolocate Override ─────────────── */
+.maplibregl-user-location-dot {
+  background: var(--accent) !important;
+  box-shadow: 0 0 8px var(--accent), 0 0 24px rgba(0, 210, 255, 0.3) !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.maplibregl-user-location-dot::before {
+  background: var(--accent) !important;
+  animation: geolocate-pulse 2s ease-out infinite !important;
+}
+
+@keyframes geolocate-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+.maplibregl-ctrl-geolocate {
+  background: rgba(8, 8, 14, 0.85) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 4px !important;
+}
+
+.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
+  filter: invert(1) opacity(0.5) !important;
+}
+
+.maplibregl-ctrl-geolocate:hover .maplibregl-ctrl-icon {
+  filter: invert(1) opacity(0.8) !important;
+}
+
+.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon {
+  filter: invert(1) opacity(1) drop-shadow(0 0 4px var(--accent)) !important;
+}
+
 /* ── Mobile ─────────────────────────── */
 @media (max-width: 768px) {
   #sidebar { width: 100%; min-width: 0; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
@@ -1110,6 +1198,15 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   </div>
 
   <!-- Tour HUD -->
+  <!-- Preload Progress -->
+  <div class="preload-status" id="preload-status">
+    <div class="preload-label">Caching tiles for offline</div>
+    <div class="preload-track">
+      <div class="preload-bar" id="preload-bar"></div>
+    </div>
+    <div class="preload-text" id="preload-text">0/0 tiles</div>
+  </div>
+
   <div class="tour-hud" id="tour-hud">
     <button class="tour-btn" id="tour-prev">Prev</button>
     <div class="tour-divider"></div>
@@ -1302,6 +1399,11 @@ function initMap() {
   });
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
+  map.addControl(new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: true,
+    showAccuracyCircle: false,
+  }), 'bottom-right');
 
   map.on('load', () => {
     addRoutes();
@@ -1698,10 +1800,14 @@ function dismissModal() {
   setTimeout(() => modal.style.display = 'none', 500);
 }
 
-document.getElementById('btn-explore').addEventListener('click', dismissModal);
+document.getElementById('btn-explore').addEventListener('click', () => {
+  dismissModal();
+  setTimeout(preloadTiles, 1000);
+});
 document.getElementById('btn-briefing').addEventListener('click', () => {
   dismissModal();
   setTimeout(startTour, 600);
+  setTimeout(preloadTiles, 2000);
 });
 
 // ── Tour ─────────────────────────────
@@ -1851,6 +1957,102 @@ init();
 // Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
+}
+
+// ── Tile Preloader ───────────────────
+function lng2tile(lng, z) { return Math.floor((lng + 180) / 360 * (1 << z)); }
+function lat2tile(lat, z) { return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * (1 << z)); }
+
+function getTilesForBounds(minLng, minLat, maxLng, maxLat, zoom) {
+  const tiles = [];
+  const x0 = lng2tile(minLng, zoom);
+  const x1 = lng2tile(maxLng, zoom);
+  const y0 = lat2tile(maxLat, zoom); // note: lat is inverted in tile coords
+  const y1 = lat2tile(minLat, zoom);
+  for (let x = x0; x <= x1; x++) {
+    for (let y = y0; y <= y1; y++) {
+      tiles.push({ z: zoom, x, y });
+    }
+  }
+  return tiles;
+}
+
+function getTilesAroundPoint(lng, lat, zoom, radius) {
+  const cx = lng2tile(lng, zoom);
+  const cy = lat2tile(lat, zoom);
+  const tiles = [];
+  for (let x = cx - radius; x <= cx + radius; x++) {
+    for (let y = cy - radius; y <= cy + radius; y++) {
+      tiles.push({ z: zoom, x, y });
+    }
+  }
+  return tiles;
+}
+
+function tileUrl(z, x, y) {
+  return `https://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}@2x.png`;
+}
+
+async function preloadTiles() {
+  if (!data) return;
+
+  const [[minLng, minLat], [maxLng, maxLat]] = data.bounds;
+  const seen = new Set();
+  const urls = [];
+
+  // Full bounds at zoom 6-10
+  for (let z = 6; z <= 10; z++) {
+    for (const t of getTilesForBounds(minLng, minLat, maxLng, maxLat, z)) {
+      const key = `${t.z}/${t.x}/${t.y}`;
+      if (!seen.has(key)) { seen.add(key); urls.push(tileUrl(t.z, t.x, t.y)); }
+    }
+  }
+
+  // Around each POI at zoom 11-12
+  data.folders.forEach(folder => {
+    folder.pois.forEach(poi => {
+      const [lng, lat] = poi.geometry.coordinates;
+      for (let z = 11; z <= 12; z++) {
+        for (const t of getTilesAroundPoint(lng, lat, z, 1)) {
+          const key = `${t.z}/${t.x}/${t.y}`;
+          if (!seen.has(key)) { seen.add(key); urls.push(tileUrl(t.z, t.x, t.y)); }
+        }
+      }
+    });
+  });
+
+  // Show progress
+  const el = document.getElementById('preload-status');
+  if (el) el.style.display = 'flex';
+  const bar = document.getElementById('preload-bar');
+  const text = document.getElementById('preload-text');
+
+  let done = 0;
+  const total = urls.length;
+  const concurrency = 12;
+
+  async function fetchOne(url) {
+    try { await fetch(url); } catch {}
+    done++;
+    if (bar) bar.style.width = `${(done / total * 100).toFixed(1)}%`;
+    if (text) text.textContent = `${done}/${total} tiles`;
+  }
+
+  // Process in batches
+  let i = 0;
+  async function batch() {
+    const promises = [];
+    while (i < urls.length && promises.length < concurrency) {
+      promises.push(fetchOne(urls[i++]));
+    }
+    await Promise.all(promises);
+    if (i < urls.length) return batch();
+  }
+
+  await batch();
+
+  if (text) text.textContent = `${total} tiles cached`;
+  setTimeout(() => { if (el) el.style.display = 'none'; }, 3000);
 }
 </script>
 </body>
