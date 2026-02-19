@@ -1240,6 +1240,11 @@ let map = null;
 let vis = {};
 let openFolders = {};
 let shimmerPhase = 0;
+let tourFocus = null;
+let tourSteps = [];
+let tourIdx = 0;
+let tourActive = false;
+let preVis = {};
 
 // ── Init ─────────────────────────────
 async function init() {
@@ -1504,20 +1509,27 @@ function addRoutes() {
 }
 
 function buildShimmerGradient(phase) {
-  // Creates a line-gradient with a bright "pulse" that sweeps along the route
-  const p = phase % 1;
-  const width = 0.06; // pulse width as fraction of line length
-  const lead = Math.min(Math.max(p, 0), 1);
-  const tail = Math.max(lead - width, 0);
-  const head = Math.min(lead + width, 1);
+  const p = Math.min(Math.max(phase % 1, 0), 1);
+  const w = 0.06;
+  const t0 = 'rgba(255,255,255,0)';
+  const t1 = 'rgba(255,255,255,0.45)';
 
-  // Clamp everything to [0,1] and ensure stops are ordered
-  const stops = [];
-  stops.push([0, 'rgba(255,255,255,0)']);
-  if (tail > 0.001) stops.push([tail, 'rgba(255,255,255,0)']);
-  stops.push([lead, 'rgba(255,255,255,0.45)']);
-  if (head < 0.999) stops.push([head, 'rgba(255,255,255,0)']);
-  stops.push([1, 'rgba(255,255,255,0)']);
+  // Build stops with guaranteed strict ascending order
+  const raw = [
+    [0, t0],
+    [Math.max(p - w, 0.001), t0],
+    [p, t1],
+    [Math.min(p + w, 0.999), t0],
+    [1, t0],
+  ];
+
+  // Deduplicate and enforce strictly ascending input values
+  const stops = [raw[0]];
+  for (let i = 1; i < raw.length; i++) {
+    if (raw[i][0] > stops[stops.length - 1][0] + 0.001) {
+      stops.push(raw[i]);
+    }
+  }
 
   return ['interpolate', ['linear'], ['line-progress'],
     ...stops.flat()
@@ -1811,11 +1823,7 @@ document.getElementById('btn-briefing').addEventListener('click', () => {
 });
 
 // ── Tour ─────────────────────────────
-let tourSteps = [];
-let tourIdx = 0;
-let tourActive = false;
-let preVis = {};
-let tourFocus = null; // { fi, pi } — which sidebar item to highlight
+// (globals declared at top)
 
 function buildTourSteps() {
   tourSteps = [];
