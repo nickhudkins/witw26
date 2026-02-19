@@ -1,4 +1,3 @@
 {
-  "buildCommand": "node parse-kml.js",
-  "outputDirectory": "public"
+  "buildCommand": "node parse-kml.js && next build"
 }
