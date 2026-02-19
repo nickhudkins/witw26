@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { useMap } from '@/hooks/useMap';
 import { useMapLayers } from '@/hooks/useMapLayers';
 import { useShimmer } from '@/hooks/useShimmer';
-import { useCrosshair } from '@/hooks/useCrosshair';
+import { useMapContext } from '@/contexts/MapContext';
 import { HudOverlay } from './HudOverlay';
 import { InfoCard } from './InfoCard';
 import { Crosshair } from './Crosshair';
@@ -16,12 +16,12 @@ export function MapContainer() {
   const { mapReady } = useMap(mapContainerRef);
   useMapLayers(mapReady);
   useShimmer(mapReady);
-  const crosshairRefs = useCrosshair();
+  const { crosshairRefs, crosshair } = useMapContext();
 
   return (
     <div id="map-container" ref={containerRef}>
       <div id="map" ref={mapContainerRef} />
-      <Tooltip containerRef={containerRef} mapReady={mapReady} />
+      <Tooltip containerRef={containerRef} mapReady={mapReady} crosshair={crosshair} />
       <Crosshair refs={crosshairRefs} />
       <div className="scanlines">
         <div className="scanline scanline-a" />

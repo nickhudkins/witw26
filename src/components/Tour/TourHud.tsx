@@ -4,15 +4,13 @@ import { useRef } from 'react';
 import { useMapStore } from '@/store/mapStore';
 import { useMapContext } from '@/contexts/MapContext';
 import { useTour } from '@/hooks/useTour';
-import { useCrosshair } from '@/hooks/useCrosshair';
 import { COLORS } from '@/lib/constants';
 import { glitchBurst } from '@/lib/glitch';
 import { GlitchText } from '../GlitchText';
 
 export function TourHud() {
-  const { mapRef } = useMapContext();
+  const { mapRef, crosshair } = useMapContext();
   const data = useMapStore((s) => s.data);
-  const crosshair = useCrosshair();
   const mapReady = !!mapRef.current;
   const { tourActive, tourSteps, tourIdx, endTour } = useTour(crosshair, mapReady);
   const nextStep = useMapStore((s) => s.nextStep);

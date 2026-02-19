@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useMapContext } from '@/contexts/MapContext';
+import { useMapStore } from '@/store/mapStore';
 import type { RouteFeature } from '@/lib/types';
 import { cleanName } from '@/lib/utils';
 
@@ -14,19 +15,13 @@ interface Props {
 }
 
 export function RouteItem({ fi, ri, route, color, folderName }: Props) {
-  const { flyToRoute, mapRef } = useMapContext();
+  const { flyToRoute, mapRef, crosshair } = useMapContext();
+  const selectedItem = useMapStore((s) => s.selectedItem);
+  const selectItem = useMapStore((s) => s.selectItem);
+  const isSelected = selectedItem?.type === 'route' && selectedItem.fi === fi && selectedItem.idx === ri;
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-  const onClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      flyToRoute(route);
-    },
-    [route, flyToRoute],
-  );
-
-  const onMouseEnter = useCallback(() => {
-    const map = mapRef.current;
-    if (!map) return;
+  const getCenter = useCallback((): [number, number] => {
     const cs = route.geometry.coordinates;
     let b = [Infinity, Infinity, -Infinity, -Infinity];
     cs.forEach(([x, y]) => {
@@ -35,12 +30,49 @@ export function RouteItem({ fi, ri, route, color, folderName }: Props) {
       b[2] = Math.max(b[2], x);
       b[3] = Math.max(b[3], y);
     });
-    const center: [number, number] = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+    return [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+  }, [route]);
+
+  const onClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      selectItem({ type: 'route', fi, idx: ri });
+      flyToRoute(route);
+      const center = getCenter();
+      const map = mapRef.current;
+      if (map) {
+        const onMove = () => crosshair.showAtCoords(center, color);
+        map.on('move', onMove);
+        map.once('moveend', () => {
+          map.off('move', onMove);
+          crosshair.showAtCoords(center, color);
+        });
+      }
+    },
+    [route, flyToRoute, mapRef, crosshair, color, getCenter, selectItem, fi, ri],
+  );
+
+  const onMouseEnter = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const center = getCenter();
     map.easeTo({ center, duration: 600 });
-  }, [route, mapRef]);
+    crosshair.showAtCoords(center, color);
+    const onMove = () => crosshair.showAtCoords(center, color);
+    map.on('move', onMove);
+    cleanupRef.current = () => map.off('move', onMove);
+  }, [route, mapRef, crosshair, color, getCenter]);
+
+  const onMouseLeave = useCallback(() => {
+    crosshair.hide();
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+  }, [crosshair]);
 
   return (
-    <div className="f-item" data-t="r" onClick={onClick} onMouseEnter={onMouseEnter}>
+    <div className={`f-item ${isSelected ? 'tour-focus' : ''}`} data-t="r" onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <div
         className="f-item-dot route"
         style={{ background: color, boxShadow: `0 0 4px ${color}` }}

@@ -1,9 +1,15 @@
 'use client';
 
-import type { CrosshairRefs } from '@/hooks/useCrosshair';
-
 interface Props {
-  refs: CrosshairRefs;
+  refs: {
+    elRef: React.RefObject<HTMLDivElement | null>;
+    hRef: React.RefObject<HTMLDivElement | null>;
+    hgRef: React.RefObject<HTMLDivElement | null>;
+    vRef: React.RefObject<HTMLDivElement | null>;
+    vgRef: React.RefObject<HTMLDivElement | null>;
+    diamondRef: React.RefObject<HTMLDivElement | null>;
+    bloomRef: React.RefObject<HTMLDivElement | null>;
+  };
 }
 
 export function Crosshair({ refs }: Props) {

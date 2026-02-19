@@ -6,13 +6,18 @@ import { useMapStore } from '@/store/mapStore';
 import { COLORS } from '@/lib/constants';
 import { glitchBurst } from '@/lib/glitch';
 import { stripHtml, truncate } from '@/lib/utils';
+interface CrosshairMethods {
+  show: (x: number, y: number, color: string) => void;
+  hide: () => void;
+}
 
 interface Props {
   containerRef: RefObject<HTMLDivElement | null>;
   mapReady: boolean;
+  crosshair: CrosshairMethods;
 }
 
-export function Tooltip({ containerRef, mapReady }: Props) {
+export function Tooltip({ containerRef, mapReady, crosshair }: Props) {
   const { mapRef } = useMapContext();
   const data = useMapStore((s) => s.data);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -33,7 +38,19 @@ export function Tooltip({ containerRef, mapReady }: Props) {
       const tooltip = tooltipRef.current;
       if (!tooltip || !map) return;
 
+      const poiFeats = map.queryRenderedFeatures(e.point, { layers: pLayers });
       const allFeats = map.queryRenderedFeatures(e.point, { layers: all });
+
+      // Crosshair — only on POIs
+      if (poiFeats.length) {
+        const pf = poiFeats[0];
+        const chColor = COLORS[pf.properties.fi % COLORS.length];
+        const coords = (pf.geometry as any).coordinates;
+        const projected = map.project(coords);
+        crosshair.show(projected.x, projected.y, chColor);
+      } else {
+        crosshair.hide();
+      }
 
       if (allFeats.length) {
         const f = allFeats[0];
@@ -109,7 +126,7 @@ export function Tooltip({ containerRef, mapReady }: Props) {
       pLayers.forEach((id) => map.off('click', id, onPoiClick));
       rLayers.forEach((id) => map.off('click', id, onRouteClick));
     };
-  }, [mapRef, mapReady, data, containerRef]);
+  }, [mapRef, mapReady, data, containerRef, crosshair]);
 
   return <div className="tooltip" ref={tooltipRef} />;
 }
