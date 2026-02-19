@@ -889,6 +889,53 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   color: var(--text);
 }
 
+.sidebar-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 2;
+}
+
+.btn-offline {
+  width: 100%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font: 500 9px var(--font-mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-offline:hover {
+  border-color: rgba(0, 210, 255, 0.15);
+  color: var(--text);
+}
+
+.btn-offline.caching {
+  border-color: rgba(0, 210, 255, 0.2);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.btn-offline.done {
+  border-color: rgba(0, 230, 122, 0.2);
+  color: #00e67a;
+  pointer-events: none;
+}
+
+.btn-offline-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
 /* ── Tour HUD ──────────────────────── */
 .tour-hud {
   position: fixed;
@@ -1104,6 +1151,12 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <input type="text" id="search" placeholder="> search routes..." autocomplete="off" spellcheck="false">
     </div>
     <div class="folders" id="folders"></div>
+    <div class="sidebar-footer">
+      <button class="btn-offline" id="btn-offline">
+        <span class="btn-offline-icon">&#x2913;</span>
+        <span id="btn-offline-label">Cache for Offline</span>
+      </button>
+    </div>
   </div>
   <div id="map-container">
     <div id="map"></div>
@@ -1813,14 +1866,21 @@ function dismissModal() {
   setTimeout(() => modal.style.display = 'none', 500);
 }
 
-document.getElementById('btn-explore').addEventListener('click', () => {
-  dismissModal();
-  setTimeout(preloadTiles, 1000);
-});
+document.getElementById('btn-explore').addEventListener('click', dismissModal);
 document.getElementById('btn-briefing').addEventListener('click', () => {
   dismissModal();
   setTimeout(startTour, 600);
-  setTimeout(preloadTiles, 2000);
+});
+
+document.getElementById('btn-offline').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-offline');
+  const label = document.getElementById('btn-offline-label');
+  btn.classList.add('caching');
+  label.textContent = 'Caching...';
+  await preloadTiles();
+  btn.classList.remove('caching');
+  btn.classList.add('done');
+  label.textContent = 'Cached for Offline';
 });
 
 // ── Tour ─────────────────────────────
@@ -2065,6 +2125,8 @@ async function preloadTiles() {
     done++;
     if (bar) bar.style.width = `${(done / total * 100).toFixed(1)}%`;
     if (text) text.textContent = `${done}/${total} tiles`;
+    const lbl = document.getElementById('btn-offline-label');
+    if (lbl) lbl.textContent = `${done}/${total} tiles`;
   }
 
   // Process in batches
