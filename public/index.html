@@ -2009,22 +2009,42 @@ async function preloadTiles() {
   const seen = new Set();
   const urls = [];
 
-  // Full bounds at zoom 6-10
-  for (let z = 6; z <= 10; z++) {
+  function addTile(z, x, y) {
+    const key = `${z}/${x}/${y}`;
+    if (!seen.has(key)) { seen.add(key); urls.push(tileUrl(z, x, y)); }
+  }
+
+  // Full bounds at zoom 5-11
+  for (let z = 5; z <= 11; z++) {
     for (const t of getTilesForBounds(minLng, minLat, maxLng, maxLat, z)) {
-      const key = `${t.z}/${t.x}/${t.y}`;
-      if (!seen.has(key)) { seen.add(key); urls.push(tileUrl(t.z, t.x, t.y)); }
+      addTile(t.z, t.x, t.y);
     }
   }
 
-  // Around each POI at zoom 11-12
+  // Along every route at zoom 12-13 (sample points along the line)
+  data.folders.forEach(folder => {
+    folder.routes.forEach(route => {
+      const coords = route.geometry.coordinates;
+      for (let ci = 0; ci < coords.length; ci += Math.max(1, Math.floor(coords.length / 40))) {
+        const [lng, lat] = coords[ci];
+        for (let z = 12; z <= 13; z++) {
+          addTile(z, lng2tile(lng, z), lat2tile(lat, z));
+          // Also grab adjacent tiles so the route line isn't at a tile edge
+          addTile(z, lng2tile(lng, z) + 1, lat2tile(lat, z));
+          addTile(z, lng2tile(lng, z), lat2tile(lat, z) + 1);
+          addTile(z, lng2tile(lng, z) + 1, lat2tile(lat, z) + 1);
+        }
+      }
+    });
+  });
+
+  // Around each POI at zoom 12-14 (wider radius for tour fly-to)
   data.folders.forEach(folder => {
     folder.pois.forEach(poi => {
       const [lng, lat] = poi.geometry.coordinates;
-      for (let z = 11; z <= 12; z++) {
-        for (const t of getTilesAroundPoint(lng, lat, z, 1)) {
-          const key = `${t.z}/${t.x}/${t.y}`;
-          if (!seen.has(key)) { seen.add(key); urls.push(tileUrl(t.z, t.x, t.y)); }
+      for (let z = 12; z <= 14; z++) {
+        for (const t of getTilesAroundPoint(lng, lat, z, 2)) {
+          addTile(t.z, t.x, t.y);
         }
       }
     });
@@ -2038,7 +2058,7 @@ async function preloadTiles() {
 
   let done = 0;
   const total = urls.length;
-  const concurrency = 12;
+  const concurrency = 24;
 
   async function fetchOne(url) {
     try { await fetch(url); } catch {}
