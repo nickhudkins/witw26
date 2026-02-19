@@ -7,6 +7,9 @@ interface MapState {
   openFolders: Record<number, boolean>;
   searchQuery: string;
 
+  // Selection
+  selectedItem: { type: 'route' | 'poi'; fi: number; idx: number } | null;
+
   // Tour
   tourActive: boolean;
   tourSteps: TourStep[];
@@ -17,6 +20,7 @@ interface MapState {
   // Actions
   setData: (data: AppData) => void;
   setSearchQuery: (q: string) => void;
+  selectItem: (item: { type: 'route' | 'poi'; fi: number; idx: number } | null) => void;
   toggleVis: (fi: number) => void;
   setVis: (fi: number, val: boolean) => void;
   toggleFolder: (fi: number) => void;
@@ -35,6 +39,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   vis: {},
   openFolders: {},
   searchQuery: '',
+  selectedItem: null,
   tourActive: false,
   tourSteps: [],
   tourIdx: 0,
@@ -52,6 +57,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  selectItem: (selectedItem) => set({ selectedItem }),
 
   toggleVis: (fi) =>
     set((s) => ({ vis: { ...s.vis, [fi]: !s.vis[fi] } })),

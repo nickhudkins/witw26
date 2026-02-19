@@ -4,9 +4,14 @@ import { useEffect, useCallback } from 'react';
 import { useMapStore } from '@/store/mapStore';
 import { useMapContext } from '@/contexts/MapContext';
 import { COLORS } from '@/lib/constants';
-import type { CrosshairRefs } from './useCrosshair';
 
-export function useTour(crosshair: CrosshairRefs, mapReady: boolean) {
+interface CrosshairMethods {
+  show: (x: number, y: number, color: string) => void;
+  hide: () => void;
+  showAtCoords: (lngLat: [number, number], color: string) => void;
+}
+
+export function useTour(crosshair: CrosshairMethods, mapReady: boolean) {
   const { mapRef } = useMapContext();
   const tourActive = useMapStore((s) => s.tourActive);
   const tourSteps = useMapStore((s) => s.tourSteps);
