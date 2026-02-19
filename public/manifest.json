@@ -1,0 +1,9 @@
+{
+  "name": "WITW26 — Smoky Mountain Routes",
+  "short_name": "WITW26",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060609",
+  "theme_color": "#060609",
+  "description": "Interactive motorcycle route map for the Smoky Mountains"
+}
