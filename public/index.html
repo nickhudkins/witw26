@@ -1892,6 +1892,7 @@ document.getElementById('btn-offline').addEventListener('click', async () => {
   await preloadTiles();
   btn.classList.remove('caching');
   btn.classList.add('done');
+  btn.querySelector('.btn-offline-icon').outerHTML = '<svg class="btn-offline-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 5 9l4.5-6"/></svg>';
   label.textContent = 'Cached for Offline';
 });
 
