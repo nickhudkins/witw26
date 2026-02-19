@@ -1,0 +1,13 @@
+{
+  "name": "witw26-map",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node parse-kml.js",
+    "start": "npx serve public -l 3000",
+    "dev": "npm run build && npm run start"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "^0.9.5"
+  }
+}
