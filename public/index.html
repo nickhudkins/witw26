@@ -304,58 +304,50 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .tooltip {
   position: absolute;
   pointer-events: none;
-  background: rgba(8, 8, 14, 0.95);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 11px;
+  background: rgba(6, 6, 9, 0.97);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 2px solid var(--accent, #00d2ff);
+  border-radius: 0;
+  padding: 8px 12px;
+  font: 11px/1.4 var(--font-mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   max-width: 260px;
   z-index: 100;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.8);
   display: none;
-}
-
-.tooltip::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  border-radius: 6px 6px 0 0;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%);
 }
 
 .tt-name {
-  font-weight: 600;
+  font: 600 11px/1 var(--font-mono);
   color: var(--text-bright);
-  font-size: 12px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .tt-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 0;
   flex-shrink: 0;
 }
 
 .tt-folder {
-  font: 500 9px var(--font-mono);
+  font: 500 9px/1 var(--font-mono);
   color: var(--text-dim);
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  margin: 0 0 0 11px;
 }
 
 .tt-desc {
-  font-size: 10px;
+  font: 400 10px/1.4 var(--font-mono);
   color: var(--text);
-  margin-top: 6px;
-  line-height: 1.5;
+  margin: 6px 0 0 11px;
+  text-transform: none;
 }
 
 /* ── HUD Overlay ────────────────────── */
@@ -919,17 +911,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   color: var(--text);
 }
 
-.btn-offline:hover #btn-offline-label {
-  animation: glitch 0.4s steps(2) infinite;
-}
-
-@keyframes glitch {
-  0%   { text-shadow: -1px 0 #ff2d55, 1px 0 #00d2ff; clip-path: inset(20% 0 40% 0); transform: translate(1px, 0); }
-  25%  { text-shadow: 1px 0 #00d2ff, -1px 0 #ff2d55; clip-path: inset(60% 0 0% 0); transform: translate(-1px, 0); }
-  50%  { text-shadow: -1px 0 #7aff3a, 1px 0 #ff2d55; clip-path: inset(0% 0 60% 0); transform: translate(1px, 0); }
-  75%  { text-shadow: 1px 0 #ff2d55, -1px 0 #00d2ff; clip-path: inset(40% 0 20% 0); transform: translate(-1px, 0); }
-  100% { text-shadow: none; clip-path: none; transform: none; }
-}
 
 .btn-offline.caching {
   border-color: rgba(0, 210, 255, 0.2);
@@ -1127,6 +1108,53 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   filter: invert(1) opacity(1) drop-shadow(0 0 4px var(--accent)) !important;
 }
 
+/* ── Corner Brackets (HUD frame) ───── */
+.hud-corners { position: absolute; inset: 0; pointer-events: none; z-index: 40; }
+.hud-corner {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: rgba(0, 210, 255, 0.15);
+  border-style: solid;
+  border-width: 0;
+}
+.hud-corner.tl { top: 8px; left: 8px; border-top-width: 1px; border-left-width: 1px; }
+.hud-corner.tr { top: 8px; right: 8px; border-top-width: 1px; border-right-width: 1px; }
+.hud-corner.bl { bottom: 8px; left: 8px; border-bottom-width: 1px; border-left-width: 1px; }
+.hud-corner.br { bottom: 8px; right: 8px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* ── Noise Grain Overlay ───────────── */
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 45;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px;
+}
+
+/* ── UTC Clock ─────────────────────── */
+.hud-clock {
+  font: 600 9px var(--font-mono);
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.25);
+  margin-top: 4px;
+}
+.hud-clock .blink { animation: clockBlink 1s step-end infinite; }
+@keyframes clockBlink { 50% { opacity: 0; } }
+
+/* ── Hex Stream ────────────────────── */
+.hex-stream {
+  font: 400 8px var(--font-mono);
+  color: rgba(0, 210, 255, 0.12);
+  letter-spacing: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-top: 4px;
+  height: 10px;
+}
+
 /* ── Mobile ─────────────────────────── */
 @media (max-width: 768px) {
   #sidebar { width: 100%; min-width: 0; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
@@ -1166,7 +1194,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <div class="sidebar-footer">
       <button class="btn-offline" id="btn-offline">
         <svg class="btn-offline-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 2v6M3.5 5.5 6 8l2.5-2.5M2 10h8"/></svg>
-        <span id="btn-offline-label" data-text="Cache for Offline">Cache for Offline</span>
+        <span id="btn-offline-label" data-glitch data-text="Cache for Offline">Cache for Offline</span>
       </button>
     </div>
   </div>
@@ -1184,6 +1212,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <div class="scanlines">
       <div class="scanline scanline-a"></div>
     </div>
+    <div class="hud-corners">
+      <div class="hud-corner tl"></div>
+      <div class="hud-corner tr"></div>
+      <div class="hud-corner bl"></div>
+      <div class="hud-corner br"></div>
+    </div>
+    <div class="grain"></div>
     <div class="hud-panel hud-tl">
       <div class="hud-coords-panel" id="hud-coords">
         <div class="hud-coord-cell">
@@ -1201,6 +1236,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <span class="hud-lbl">zoom</span>
         <span class="hud-val" id="hud-zoom">7.0</span>
       </div>
+      <div class="hud-clock" id="hud-clock">00<span class="blink">:</span>00<span class="blink">:</span>00Z</div>
     </div>
     <div class="hud-panel hud-bl">
       <div class="info-card">
@@ -1225,6 +1261,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <div class="ic-divider"></div>
           <div class="ic-hover-name" id="ic-name">&nbsp;</div>
           <div class="ic-hover-detail" id="ic-detail">&nbsp;</div>
+          <div class="hex-stream" id="hex-stream"></div>
         </div>
       </div>
     </div>
@@ -1290,15 +1327,15 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const COLORS = [
-  '#00d2ff', // electric cyan
+  '#00d2ff', // cyan
   '#ff2d55', // racing red
-  '#7aff3a', // acid green
-  '#ff8800', // hot amber
-  '#c840ff', // ultraviolet
-  '#ffe600', // signal yellow
-  '#00e87a', // matrix green
-  '#ff5e00', // blaze orange
-  '#4488ff', // cobalt
+  '#e4e4f0', // ghost white
+  '#0090b3', // deep cyan
+  '#ff6b7f', // soft red
+  '#7ecbdb', // pale cyan
+  '#c0c0d0', // silver
+  '#ff4466', // hot pink
+  '#00a5cc', // mid cyan
 ];
 
 let data = null;
@@ -1387,13 +1424,34 @@ function buildSidebar() {
         e.stopPropagation();
         const fIdx = +item.dataset.fi;
         const idx = +item.dataset.i;
-        if (item.dataset.t === 'r') flyToRoute(data.folders[fIdx].routes[idx]);
-        else flyToPoint(data.folders[fIdx].pois[idx].geometry.coordinates);
+        const color = COLORS[fIdx % COLORS.length];
+        const folderName = data.folders[fIdx].name;
+
+        // Remove previous focus
+        document.querySelectorAll('.f-item.tour-focus').forEach(el => el.classList.remove('tour-focus'));
+        item.classList.add('tour-focus');
+
+        if (item.dataset.t === 'r') {
+          const route = data.folders[fIdx].routes[idx];
+          flyToRoute(route);
+          const name = cleanName(route.properties.name);
+          showTooltipForItem(name, folderName, 'ROUTE', '', color);
+        } else {
+          const poi = data.folders[fIdx].pois[idx];
+          flyToPoint(poi.geometry.coordinates);
+          let desc = (poi.properties.description || '').replace(/<br\s*\/?>/g, ' · ').replace(/<[^>]+>/g, '').trim();
+          if (desc.length > 120) desc = desc.slice(0, 120) + '…';
+          showTooltipForItem(poi.properties.name, folderName, 'POI', desc, color);
+        }
       });
 
       // Hover — crosshair + ease to center
       item.addEventListener('mouseenter', () => {
         if (!map) return;
+        // Clear stale tooltip from previous click
+        const tooltip = document.getElementById('tooltip');
+        clearTimeout(tooltip._hideTimer);
+        tooltip.style.display = 'none';
         const fIdx = +item.dataset.fi;
         const idx = +item.dataset.i;
         const color = COLORS[fIdx % COLORS.length];
@@ -1444,6 +1502,25 @@ function cleanName(n) {
   return n.replace(/^(Start|End) of (Track|TRK)[\s-]*/i, '').replace(/\s*\(Track\)\s*$/i, '').replace(/\s*- SHP\s*$/i, '').trim();
 }
 
+function showTooltipForItem(name, folder, type, desc, color) {
+  const tooltip = document.getElementById('tooltip');
+  tooltip.innerHTML = `
+    <div class="tt-name"><span class="tt-dot" style="background:${color};box-shadow:0 0 6px ${color}"></span><span data-glitch>${name}</span></div>
+    <div class="tt-folder">${folder} // ${type}</div>
+    ${desc ? `<div class="tt-desc">${desc}</div>` : ''}`;
+  tooltip.style.display = 'block';
+  tooltip.style.borderLeftColor = color;
+  glitchBurst(tooltip, true);
+  // Position center-ish of map
+  const rect = document.getElementById('map-container').getBoundingClientRect();
+  tooltip.style.left = (rect.width / 2 + 20) + 'px';
+  tooltip.style.top = (rect.height / 2 - 30) + 'px';
+  updateInfoCard(name, `${folder} // ${type}`, color);
+  // Auto-hide after a few seconds
+  clearTimeout(tooltip._hideTimer);
+  tooltip._hideTimer = setTimeout(() => { tooltip.style.display = 'none'; clearInfoCard(); }, 3000);
+}
+
 document.getElementById('search').addEventListener('input', buildSidebar);
 
 // ── Map ──────────────────────────────
@@ -1455,7 +1532,7 @@ function initMap() {
       sources: {
         'carto': {
           type: 'raster',
-          tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
+          tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png'],
           tileSize: 256,
           attribution: '&copy; CARTO &copy; OSM',
         }
@@ -1830,12 +1907,12 @@ function setupInteraction() {
       if (desc.length > 120) desc = desc.slice(0, 120) + '…';
 
       tooltip.innerHTML = `
-        <div class="tt-name"><span class="tt-dot" style="background:${color};box-shadow:0 0 6px ${color}"></span>${p.name}</div>
+        <div class="tt-name"><span class="tt-dot" style="background:${color};box-shadow:0 0 6px ${color}"></span><span data-glitch>${p.name}</span></div>
         <div class="tt-folder">${p.folder} // ${isR ? 'ROUTE' : 'POI'}</div>
         ${desc ? `<div class="tt-desc">${desc}</div>` : ''}`;
-      tooltip.style.cssText = `display:block;border-top-color:${color}`;
-      tooltip.style.borderImage = `linear-gradient(90deg, ${color}44, ${color}, ${color}44) 1`;
-      tooltip.style.borderImageSlice = '1 0 0 0';
+      tooltip.style.display = 'block';
+      tooltip.style.borderLeftColor = color;
+      glitchBurst(tooltip, true);
 
       const rect = document.getElementById('map-container').getBoundingClientRect();
       let x = e.point.x + 16, y = e.point.y - 10;
@@ -1882,6 +1959,63 @@ document.getElementById('btn-explore').addEventListener('click', dismissModal);
 document.getElementById('btn-briefing').addEventListener('click', () => {
   dismissModal();
   setTimeout(startTour, 600);
+});
+
+// Character scramble on hover — reusable
+const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`0123456789';
+
+function glitchBurst(el, fast = false) {
+  const target = el.querySelector('[data-glitch]') || el;
+  clearTimeout(target._glitchTimer);
+  const original = target.dataset.text || target.textContent;
+  target.dataset.text = original;
+  const nonSpace = original.replace(/ /g, '').length;
+  const maxGlitch = Math.max(3, Math.floor(nonSpace * 0.5));
+  const count = 3 + Math.floor(Math.random() * Math.max(1, maxGlitch - 2));
+  const indices = [];
+  const candidates = [];
+  for (let i = 0; i < original.length; i++) { if (original[i] !== ' ') candidates.push(i); }
+  while (indices.length < Math.min(count, candidates.length)) {
+    const idx = candidates[Math.floor(Math.random() * candidates.length)];
+    if (!indices.includes(idx)) indices.push(idx);
+  }
+  const totalDuration = fast ? 50 + Math.floor(Math.random() * 30) : 60 + Math.floor(Math.random() * 240);
+  const steps = fast ? 2 + Math.floor(Math.random() * 2) : 3 + Math.floor(Math.random() * 4);
+  const delay = Math.round(totalDuration / steps);
+  let step = 0;
+  (function tick() {
+    const arr = original.split('');
+    indices.forEach(i => { arr[i] = `<span style="opacity:0.7">${glitchChars[Math.floor(Math.random() * glitchChars.length)]}</span>`; });
+    target.innerHTML = arr.join('');
+    step++;
+    if (step < steps) { target._glitchTimer = setTimeout(tick, delay); }
+    else { setTimeout(() => { target.textContent = original; }, delay); }
+  })();
+}
+
+function triggerGlitch(hoveredBtn) {
+  const visible = Array.from(document.querySelectorAll('button')).filter(b => b.offsetParent !== null);
+  const others = visible.filter(b => b !== hoveredBtn);
+  const chance = 1 / visible.length;
+  // hovered button always glitches
+  glitchBurst(hoveredBtn);
+  // each other visible button has a 1/n chance
+  others.forEach(b => { if (Math.random() < chance) glitchBurst(b); });
+}
+
+document.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('mouseenter', () => triggerGlitch(btn));
+  btn.addEventListener('mouseleave', () => glitchBurst(btn, true));
+});
+
+// Random glitch on any hoverable text — low probability
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('.f-item-name, .f-head-name, .hud-chip, .ic-value, .ic-title, .ic-hover-name, .tour-folder-name, .tour-poi-name, .ms-val, .ms-label, .tt-folder, .tt-desc');
+  if (!el || el._glitching) return;
+  if (Math.random() > 0.35) return; // ~35% chance
+  el._glitching = true;
+  glitchBurst(el, true);
+  setTimeout(() => { el._glitching = false; }, 400);
 });
 
 document.getElementById('btn-offline').addEventListener('click', async () => {
@@ -2072,7 +2206,7 @@ function getTilesAroundPoint(lng, lat, zoom, radius) {
 }
 
 function tileUrl(z, x, y) {
-  return `https://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}@2x.png`;
+  return `https://a.basemaps.cartocdn.com/dark_nolabels/${z}/${x}/${y}@2x.png`;
 }
 
 async function preloadTiles() {
@@ -2158,6 +2292,27 @@ async function preloadTiles() {
   if (text) text.textContent = `${total} tiles cached`;
   setTimeout(() => { if (el) el.style.display = 'none'; }, 3000);
 }
+
+// UTC Clock
+setInterval(() => {
+  const d = new Date();
+  const h = String(d.getUTCHours()).padStart(2, '0');
+  const m = String(d.getUTCMinutes()).padStart(2, '0');
+  const s = String(d.getUTCSeconds()).padStart(2, '0');
+  const el = document.getElementById('hud-clock');
+  if (el) el.innerHTML = `${h}<span class="blink">:</span>${m}<span class="blink">:</span>${s}Z`;
+}, 1000);
+
+// Hex data stream — ambient cycling noise
+(function hexStream() {
+  const el = document.getElementById('hex-stream');
+  if (!el) return;
+  setInterval(() => {
+    let s = '';
+    for (let i = 0; i < 28; i++) s += Math.floor(Math.random() * 16).toString(16);
+    el.textContent = s.toUpperCase().match(/.{4}/g).join(' ');
+  }, 120);
+})();
 </script>
 </body>
 </html>
