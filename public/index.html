@@ -2020,7 +2020,7 @@ function glitchBurst(el, fast = false) {
 }
 
 function triggerGlitch(hoveredBtn) {
-  const visible = Array.from(document.querySelectorAll('button')).filter(b => b.offsetParent !== null);
+  const visible = Array.from(document.querySelectorAll('#sidebar button, .modal button, .tour-hud button')).filter(b => b.offsetParent !== null);
   const others = visible.filter(b => b !== hoveredBtn);
   const chance = 1 / visible.length;
   // hovered button always glitches
@@ -2029,7 +2029,7 @@ function triggerGlitch(hoveredBtn) {
   others.forEach(b => { if (Math.random() < chance) glitchBurst(b); });
 }
 
-document.querySelectorAll('button').forEach(btn => {
+document.querySelectorAll('#sidebar button, .modal button, .tour-hud button').forEach(btn => {
   btn.addEventListener('mouseenter', () => triggerGlitch(btn));
   btn.addEventListener('mouseleave', () => glitchBurst(btn, true));
 });
