@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function PoiItem({ fi, pi, poi, color, folderName }: Props) {
-  const { flyToPoint, mapRef, crosshair } = useMapContext();
+  const { flyToPoint, mapRef, crosshair, snapToSelection } = useMapContext();
   const tourFocus = useMapStore((s) => s.tourFocus);
   const selectedItem = useMapStore((s) => s.selectedItem);
   const selectItem = useMapStore((s) => s.selectItem);
@@ -56,12 +56,18 @@ export function PoiItem({ fi, pi, poi, color, folderName }: Props) {
   }, [poi, mapRef, crosshair, color]);
 
   const onMouseLeave = useCallback(() => {
-    crosshair.hide();
     if (cleanupRef.current) {
       cleanupRef.current();
       cleanupRef.current = null;
     }
-  }, [crosshair]);
+    const sel = useMapStore.getState().selectedItem;
+    if (sel) {
+      // Snap map back to selected item
+      snapToSelection();
+    } else {
+      crosshair.hide();
+    }
+  }, [crosshair, snapToSelection]);
 
   return (
     <div

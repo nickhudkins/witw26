@@ -4,6 +4,8 @@ import { createContext, useContext, useRef, useCallback, type ReactNode } from '
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type { RouteFeature } from '@/lib/types';
 import { hexToRgb } from '@/lib/utils';
+import { useMapStore } from '@/store/mapStore';
+import { COLORS } from '@/lib/constants';
 
 interface CrosshairMethods {
   show: (x: number, y: number, color: string) => void;
@@ -15,6 +17,7 @@ interface MapContextValue {
   mapRef: React.RefObject<MaplibreMap | null>;
   flyToRoute: (route: RouteFeature) => void;
   flyToPoint: (coords: [number, number]) => void;
+  snapToSelection: () => void;
   crosshairRefs: {
     elRef: React.RefObject<HTMLDivElement | null>;
     hRef: React.RefObject<HTMLDivElement | null>;
@@ -110,11 +113,45 @@ export function MapProvider({ children }: { children: ReactNode }) {
     map.flyTo({ center: c, zoom: 13, duration: 1500 });
   }, []);
 
+  // Ease map back to the currently selected item
+  const snapToSelection = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const { selectedItem, data } = useMapStore.getState();
+    if (!selectedItem || !data) return;
+
+    const folder = data.folders[selectedItem.fi];
+    if (!folder) return;
+
+    if (selectedItem.type === 'poi') {
+      const poi = folder.pois[selectedItem.idx];
+      if (poi) {
+        map.easeTo({ center: poi.geometry.coordinates, duration: 600 });
+      }
+    } else {
+      const route = folder.routes[selectedItem.idx];
+      if (route) {
+        const cs = route.geometry.coordinates;
+        let b = [Infinity, Infinity, -Infinity, -Infinity];
+        cs.forEach(([x, y]) => {
+          b[0] = Math.min(b[0], x);
+          b[1] = Math.min(b[1], y);
+          b[2] = Math.max(b[2], x);
+          b[3] = Math.max(b[3], y);
+        });
+        map.fitBounds(
+          [[b[0], b[1]], [b[2], b[3]]],
+          { padding: 80, duration: 600 },
+        );
+      }
+    }
+  }, []);
+
   const crosshairRefs = { elRef, hRef, hgRef, vRef, vgRef, diamondRef, bloomRef };
   const crosshair = { show, hide, showAtCoords };
 
   return (
-    <MapContext.Provider value={{ mapRef, flyToRoute, flyToPoint, crosshairRefs, crosshair }}>
+    <MapContext.Provider value={{ mapRef, flyToRoute, flyToPoint, snapToSelection, crosshairRefs, crosshair }}>
       {children}
     </MapContext.Provider>
   );

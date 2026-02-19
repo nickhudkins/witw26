@@ -41,14 +41,15 @@ export function Tooltip({ containerRef, mapReady, crosshair }: Props) {
       const poiFeats = map.queryRenderedFeatures(e.point, { layers: pLayers });
       const allFeats = map.queryRenderedFeatures(e.point, { layers: all });
 
-      // Crosshair — only on POIs
+      // Crosshair — only on POIs, but don't clobber sidebar selection
+      const sel = useMapStore.getState().selectedItem;
       if (poiFeats.length) {
         const pf = poiFeats[0];
         const chColor = COLORS[pf.properties.fi % COLORS.length];
         const coords = (pf.geometry as any).coordinates;
         const projected = map.project(coords);
         crosshair.show(projected.x, projected.y, chColor);
-      } else {
+      } else if (!sel) {
         crosshair.hide();
       }
 

@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function RouteItem({ fi, ri, route, color, folderName }: Props) {
-  const { flyToRoute, mapRef, crosshair } = useMapContext();
+  const { flyToRoute, mapRef, crosshair, snapToSelection } = useMapContext();
   const selectedItem = useMapStore((s) => s.selectedItem);
   const selectItem = useMapStore((s) => s.selectItem);
   const isSelected = selectedItem?.type === 'route' && selectedItem.fi === fi && selectedItem.idx === ri;
@@ -64,12 +64,18 @@ export function RouteItem({ fi, ri, route, color, folderName }: Props) {
   }, [route, mapRef, crosshair, color, getCenter]);
 
   const onMouseLeave = useCallback(() => {
-    crosshair.hide();
     if (cleanupRef.current) {
       cleanupRef.current();
       cleanupRef.current = null;
     }
-  }, [crosshair]);
+    const sel = useMapStore.getState().selectedItem;
+    if (sel) {
+      // Snap map back to selected item
+      snapToSelection();
+    } else {
+      crosshair.hide();
+    }
+  }, [crosshair, snapToSelection]);
 
   return (
     <div className={`f-item ${isSelected ? 'tour-focus' : ''}`} data-t="r" onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
