@@ -1,4 +1,5 @@
 import type { AppData } from './types';
+import { tileUrl } from './constants';
 
 function lng2tile(lng: number, z: number): number {
   return Math.floor(((lng + 180) / 360) * (1 << z));
@@ -44,10 +45,6 @@ function getTilesAroundPoint(lng: number, lat: number, zoom: number, radius: num
     }
   }
   return tiles;
-}
-
-function tileUrl(z: number, x: number, y: number): string {
-  return `https://a.basemaps.cartocdn.com/dark_nolabels/${z}/${x}/${y}@2x.png`;
 }
 
 export async function preloadTiles(
