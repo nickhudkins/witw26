@@ -1,4 +1,5 @@
-const CACHE_NAME = 'witw26-v1';
+// Bumped to drop tiles cached with the CARTO "API KEY REQUIRED" watermark.
+const CACHE_NAME = 'witw26-v2';
 
 const PRECACHE = [
   '/',
